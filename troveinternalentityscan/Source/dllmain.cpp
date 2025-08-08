@@ -3,7 +3,7 @@
 #include "functions.h"
 #include "gui/gui.h"
 
-
+//test comment for git
 int flipflop = 0;
 
 void MainThread()

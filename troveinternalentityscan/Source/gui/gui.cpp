@@ -5,6 +5,9 @@
 
 #pragma comment(lib, "d3d11.lib")
 
+//mostly skidded from "CasualGamer" on youtube, thanks for that babe xoxo
+//im 2 stupid for this directx hooking nonsense </3
+
 HINSTANCE dll_handle;
 
 typedef long(__stdcall* present)(IDXGISwapChain*, UINT, UINT);
@@ -13,43 +16,39 @@ present p_present_target;
 
 bool get_present_pointer()
 {
-	DXGI_SWAP_CHAIN_DESC sd; //struct
+	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
-	sd.BufferCount = 2; // 2 = triple buffering
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //display format, this one works for most gpus but selecting one thats valid is fine
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // this is the only valid buffer useage for my usecase
-	sd.OutputWindow = GetForegroundWindow(); //game window, getforegroundwindow should work fine
-	sd.SampleDesc.Count = 1; //multisampling
-	sd.Windowed = TRUE; //honestly idfk, it works
-	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; //discard lets the display driver choose the most efficient way 2 do whatever
+	sd.BufferCount = 2;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.OutputWindow = GetForegroundWindow();
+	sd.SampleDesc.Count = 1;
+	sd.Windowed = TRUE; 
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	IDXGISwapChain* swap_chain;
 	ID3D11Device* device;
 
 	const D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
 	if (D3D11CreateDeviceAndSwapChain(
-		NULL, //null = pointer to default video adapter
-		D3D_DRIVER_TYPE_HARDWARE, //type hardware = let gpu handle selecting the type (could also use null)
-		NULL, //software
-		0, //dont need any
-		feature_levels, //the array declared just before this, could also just be null
-		2, //there are 2 levels so 2, if levels is null this is 0
-		D3D11_SDK_VERSION, //documentation says to do this
-		&sd, //sd = swapchain description
-		&swap_chain, //pointers to store the created swapchain + device
+		NULL,
+		D3D_DRIVER_TYPE_HARDWARE,
+		NULL,
+		0,
+		feature_levels,
+		2,
+		D3D11_SDK_VERSION,
+		&sd,
+		&swap_chain,
 		&device,
 		nullptr,
-		nullptr) == S_OK) //returns s_ok if its all good
+		nullptr) == S_OK)
 	{
-		void** p_vtable = *reinterpret_cast<void***>(swap_chain); //swap chain var is a pointer to the swap chain
-		//vtable pointer is at the very beginning of the swap chain
-		//to get the vtable pointer we dereference once,
+		void** p_vtable = *reinterpret_cast<void***>(swap_chain);
 		swap_chain->Release();
 		device->Release();
 		//context->Release();
-		p_present_target = (present)p_vtable[8]; //by accessing an entry to the array we by extension dereference a 2nd time, this location is the pointer to the function
-		//the present method is the 9th method in the function so by accessing the 8th thing we get present
-		//note: we defined the typedef of the function we're grabbing up top
+		p_present_target = (present)p_vtable[8];
 		return true;
 	}
 	return false;
@@ -69,6 +68,7 @@ LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 //menu vars
 bool show_menu = true;
 bool silentAimCb = false;
+bool bossPriority = true;
 float version = 0.2f;
 float maxRangeSlider = 40.0f;
 Entity closestEntity = {};
@@ -82,25 +82,19 @@ HWND window = NULL;
 ID3D11Device* p_device = NULL;
 ID3D11DeviceContext* p_context = NULL;
 ID3D11RenderTargetView* mainRenderTargetView = NULL;
-static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_interval, UINT flags) { //this is the detour version of the function that minhook will run
+static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_interval, UINT flags) {
 	if (!init) {
 		if (SUCCEEDED(p_swap_chain->GetDevice(__uuidof(ID3D11Device), (void**)&p_device)))
 		{
 			p_device->GetImmediateContext(&p_context);
-
-			// Get HWND to the current window of target game
 			DXGI_SWAP_CHAIN_DESC sd;
 			p_swap_chain->GetDesc(&sd);
 			window = sd.OutputWindow;
-
-			// location in mem where imgui is rendered to
 			ID3D11Texture2D* pBackBuffer;
 			p_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-			//create a render target pointing to the back buffer
 			p_device->CreateRenderTargetView(pBackBuffer, NULL, &mainRenderTargetView);
-			// this release doesnt destroy the backbuffer, it releases pBackBuffer
 			pBackBuffer->Release();
-			oWndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR)WndProc); //handles all events inside window, mouse clicks and keystrokes
+			oWndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
 			//init imgui
 			ImGui::CreateContext();
@@ -129,6 +123,7 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 		ImGui::SetWindowSize(ImVec2(300, 300), ImGuiCond_Always);
 		ImGui::Text("Combat Options:");
 		ImGui::Checkbox("Silent Aim", &silentAimCb);
+		ImGui::Checkbox("Prioritise High HP", &bossPriority);
 		ImGui::SliderFloat("Max Range", &maxRangeSlider, 1, 40);
 		ImGui::End();
 

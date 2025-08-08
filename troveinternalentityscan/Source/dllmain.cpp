@@ -3,8 +3,6 @@
 #include "functions.h"
 #include "gui/gui.h"
 
-//test comment for git
-int flipflop = 0;
 
 void MainThread()
 {   
@@ -13,10 +11,7 @@ void MainThread()
         return;
     }
 
-   // AttachConsole();
-    //std::cout << "[*] DLL injected and running.\n";
     uintptr_t base = (uintptr_t)GetModuleHandleA("Trove.exe");
-    //std::cout << "[*] Base: 0x" << std::hex << base << std::endl;
     
     PatchMovssInstructions(base);
     
@@ -49,11 +44,9 @@ void MainThread()
         float cy = ReadFloat(camPtr + 4);
         float cz = ReadFloat(camPtr + 8);
 
-        //std::cout << "[PlayerPos] x: " << px << ", y: " << py << ", z: " << pz << std::endl;
-        //std::cout << "[CamPos] x: " << cx << ", y: " << cy << ", z: " << cz << std::endl;
-
         closestDist = FLT_MAX;
         float highestLevel = 0.0f;
+		float highestHP = 0.0f;
         closestEntity = { "", 0, 0, 0, 0, 0, 0, 0.0 };
         bool found = false;
 
@@ -69,15 +62,23 @@ void MainThread()
                 float dz = e.z - pz;
                 float dist = sqrt(dx * dx + dy * dy + dz * dz);
                 if (dist < closestDist && dist <= maxRangeSlider) {
-                    if ((closestDist - dist) < 8) {
-						//if enemies are within 8 units of each other, prefer the one with the highest level
-                        if (e.level > highestLevel) {
-                            highestLevel = e.level;
+                    if ((closestDist - dist) < 20 && !bossPriority) {
+						//if enemies are within 20 units of each other, prefer the one with the highest HP
+                        if (e.health > highestHP) {
+							highestHP = e.health;
                             closestDist = dist;
                             closestEntity = e;
                         }                    
                     }
-                    else if((closestDist - dist) > 8) {
+                    if ((closestDist - dist) < 40 && bossPriority) {
+                        //if boss priority is enabled and enemies are within 40 units of each other, prefer the one with the highest HP
+                        if (e.health > highestHP) {
+                            highestHP = e.health;
+                            closestDist = dist;
+                            closestEntity = e;
+                        }
+                    }
+                    else if((closestDist - dist) > 20) {
                         closestDist = dist;
                         closestEntity = e;
                     }
@@ -85,7 +86,6 @@ void MainThread()
                 }
             }
         }
-        
         
         if (found && silentAimCb && (GetAsyncKeyState(VK_LBUTTON) & 0x8000)) {
 
@@ -98,25 +98,14 @@ void MainThread()
             silentAimValueY = -fy - 0.04;
             silentAimValueZ = -fz;
             silentAimActive = true;
-            
 
-           // flipflop++;
-            //if (flipflop >= 10) {
-                //std::cout << "[DEBUG] Target: " << closestEntity.name << " Distance: " << closestDist << " scale: " << closestEntity.scale << " level: "<< closestEntity.level << std::endl;
-              //  flipflop = 0;
-           // }
         }
         else {
             silentAimActive = false;
-            //if (flipflop >= 10) {
-                //std::cout << "No valid entity found within range " << maxRangeSlider << ".\n";
-                //flipflop = 0;
-            //}
             
         }
         
-        //std::cout << "hello from main loop" << std::endl;
-        Sleep(10);
+        Sleep(1);
     }
 }
 

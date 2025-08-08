@@ -33,6 +33,7 @@ extern bool silentAimCb;
 extern float version;
 extern float maxRangeSlider;
 extern Entity closestEntity;
+extern float closestDist;
 
 
 

@@ -72,6 +72,7 @@ bool silentAimCb = false;
 float version = 0.2f;
 float maxRangeSlider = 40.0f;
 Entity closestEntity = {};
+float closestDist = FLT_MAX;
 
 
 
@@ -104,7 +105,7 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 			//init imgui
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
-			io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange; //this is for altering cursor visibility incase the game eats it or something
+			io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange; //enabling this will stop imgui from managing the cursor instead of the game
 			ImGui_ImplWin32_Init(window);
 			ImGui_ImplDX11_Init(p_device, p_context);
 			init = true;
@@ -115,15 +116,18 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 
+	ImGui::GetStyle().WindowRounding = 0.0f;
+
 	ImGui::NewFrame();
 	//draw whatever we want between newframe and endframe
 	ImGui::ShowDemoWindow();
 
 
 	if (show_menu) {
-		ImGui::Begin("T.I.M v 0.2", &show_menu);
-		ImGui::SetWindowSize(ImVec2(200, 200), ImGuiCond_Always);
-		ImGui::Text("Options:");
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+		ImGui::Begin("T.I.M v 0.2", &show_menu, window_flags);
+		ImGui::SetWindowSize(ImVec2(300, 300), ImGuiCond_Always);
+		ImGui::Text("Combat Options:");
 		ImGui::Checkbox("Silent Aim", &silentAimCb);
 		ImGui::SliderFloat("Max Range", &maxRangeSlider, 1, 40);
 		ImGui::End();
@@ -157,6 +161,7 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 			ImGui::Text("Current Target: %s", closestEntity.name.c_str());
 			ImGui::Text("Level: %i", closestEntity.level);
 			ImGui::Text("Health: %.0f", closestEntity.health);
+			ImGui::Text("Dist: %.1f", closestDist);
 			
 		}
 		ImGui::End();

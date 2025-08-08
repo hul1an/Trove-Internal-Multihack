@@ -40,7 +40,7 @@ bool silentAimActive = false;
 extern const std::vector<std::string> blacklist_keywords = {
     "pet", "portal", "abilities", "placeable", "cornerstone",
     "services", "client", "karma", "outpost", "minion", "custom",
-    "hub", "merchant", "tutorial"//, "garden_upkeep_interactive"
+    "hub", "merchant", "tutorial", "garden_upkeep_interactive"
 };
 
 //=================================

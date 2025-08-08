@@ -22,6 +22,10 @@ void MainThread()
     
     while (true) {
 
+        if (GetAsyncKeyState(VK_INSERT) & 1) {
+            show_menu = (!show_menu);
+        }
+
         uintptr_t localPlayer = GetAddress(base, { localPlayerOffset });
  
         uintptr_t playerPosPtr = GetAddress(base, positionOffsets);
@@ -48,7 +52,8 @@ void MainThread()
         //std::cout << "[PlayerPos] x: " << px << ", y: " << py << ", z: " << pz << std::endl;
         //std::cout << "[CamPos] x: " << cx << ", y: " << cy << ", z: " << cz << std::endl;
 
-        float closestDist = FLT_MAX;
+        closestDist = FLT_MAX;
+        float highestLevel = 0.0f;
         closestEntity = { "", 0, 0, 0, 0, 0, 0, 0.0 };
         bool found = false;
 
@@ -64,15 +69,30 @@ void MainThread()
                 float dz = e.z - pz;
                 float dist = sqrt(dx * dx + dy * dy + dz * dz);
                 if (dist < closestDist && dist <= maxRangeSlider) {
-                    closestDist = dist;
-                    closestEntity = e;
+                    if ((closestDist - dist) < 8) {
+						//if enemies are within 8 units of each other, prefer the one with the highest level
+                        if (e.level > highestLevel) {
+                            highestLevel = e.level;
+                            closestDist = dist;
+                            closestEntity = e;
+                        }                    
+                    }
+                    else if((closestDist - dist) > 8) {
+                        closestDist = dist;
+                        closestEntity = e;
+                    }
                     found = true;
                 }
             }
         }
         
         
-        if (found && silentAimCb) {
+        if (found && silentAimCb && (GetAsyncKeyState(VK_LBUTTON) & 0x8000)) {
+
+            if (closestEntity.level < 0 || closestEntity.level > 100) {
+                closestEntity.level = 0;
+            }
+
             auto [fx, fy, fz] = GetForwardVector(cx, cy, cz, closestEntity.x, closestEntity.y, closestEntity.z);
             silentAimValueX = -fx;
             silentAimValueY = -fy - 0.04;

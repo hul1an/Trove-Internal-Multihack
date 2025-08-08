@@ -10,7 +10,6 @@ current features:
 
 yup, thats it...
 dont even have esp or anything yet. 
-silent aim currently doesnt have any sort of target priority
 
 
 TODO:

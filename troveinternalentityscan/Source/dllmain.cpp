@@ -54,6 +54,11 @@ void MainThread()
             found = false;
             silentAimActive = false;
         }
+
+        //TODO: create proper multi-filter targeting system, add optiont to filter by health, boss only, etc
+        //do cursed skulls have any sort of active indicator within the entity list?
+        //if i could figure out how to do boss only + skulls thatd be best
+        //add fov system, 180 flicking is a bit much for main account, i'd feel safe with like cs2 semirage fov LOL
         
         if (!filteredEntities.empty()) {
             for (const auto& e : filteredEntities) {

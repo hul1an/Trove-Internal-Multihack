@@ -100,6 +100,29 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
 			io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange; //enabling this will stop imgui from managing the cursor instead of the game
+
+			//colorscheme
+			ImGui::StyleColorsClassic();
+
+			//rounding
+			ImGui::GetStyle().WindowRounding = 6;
+			ImGui::GetStyle().FrameRounding = 12;
+			ImGui::GetStyle().GrabMinSize = 17; //helps round the balls more
+			ImGui::GetStyle().GrabRounding = 12;
+
+
+			//borders
+			ImGui::GetStyle().FrameBorderSize = 1;
+			ImGui::GetStyle().WindowBorderSize = 1;
+			ImGui::GetStyle().PopupBorderSize = 1;
+
+			//title stuff
+			ImGui::GetStyle().WindowTitleAlign = ImVec2(0.5f, 0.5f);
+			ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_None;
+
+
+			io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\bahnschrift.ttf", 15.f);
+
 			ImGui_ImplWin32_Init(window);
 			ImGui_ImplDX11_Init(p_device, p_context);
 			init = true;
@@ -110,11 +133,11 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 
-	ImGui::GetStyle().WindowRounding = 0.0f;
 
 	ImGui::NewFrame();
 	//draw whatever we want between newframe and endframe
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
+	ImGui::ShowStyleEditor();
 
 
 	if (show_menu) {
@@ -131,11 +154,12 @@ static long __stdcall detour_present(IDXGISwapChain* p_swap_chain, UINT sync_int
 	}
 
 	if (silentAimCb) {
-		ImGuiIO& io = ImGui::GetIO();
+		
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 		int corner = 0;
 		if (corner != -1)
 		{
+			ImGuiIO& io = ImGui::GetIO();
 			const float PAD = 100.0f;
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
 			ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
